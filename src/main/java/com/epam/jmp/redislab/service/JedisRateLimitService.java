@@ -7,17 +7,16 @@ import redis.clients.jedis.JedisCluster;
 import redis.clients.jedis.Transaction;
 import redis.clients.jedis.args.ExpiryOption;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 @Component
 public class JedisRateLimitService implements RateLimitService {
 
-    private final List<RateLimitRule> rateLimitRules;
+    private final Set<RateLimitRule> rateLimitRules;
     private final JedisCluster jedisCluster;
 
-    public JedisRateLimitService(List<RateLimitRule> rateLimitRules, JedisCluster jedisCluster) {
+    public JedisRateLimitService(Set<RateLimitRule> rateLimitRules, JedisCluster jedisCluster) {
         this.rateLimitRules = rateLimitRules;
         this.jedisCluster = jedisCluster;
     }
