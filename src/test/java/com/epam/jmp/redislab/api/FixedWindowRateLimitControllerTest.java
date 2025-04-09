@@ -1,11 +1,14 @@
 package com.epam.jmp.redislab.api;
 
 import com.epam.jmp.redislab.utils.RateLimitResponseStats;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -36,6 +39,17 @@ class FixedWindowRateLimitControllerTest {
 
     @Value("http://localhost:${local.server.port}/api/v1/ratelimit/fixedwindow")
     private String apiUrl;
+
+    @BeforeEach
+    void setUp() {
+        restTemplate.setErrorHandler(new DefaultResponseErrorHandler() {
+            @Override
+            public boolean hasError(ClientHttpResponse response) {
+                // Return false so that RestTemplate does not throw exceptions for 4xx and 5xx codes
+                return false;
+            }
+        });
+    }
 
     // 2 requests per minute per accountId rule
     @Test
@@ -89,7 +103,7 @@ class FixedWindowRateLimitControllerTest {
         //Sending maxim allowed number of request
         RateLimitResponseStats statsForNextWindow = this.sendRatelimitRequests(2, requestDescriptor);
         // Checking that no request was blocked
-        assertEquals(2, stats.getOkCount());
+        assertEquals(2, statsForNextWindow.getOkCount());
     }
 
     // 1 request for 192.168.100.150 per HOUR

@@ -4,8 +4,6 @@ import com.epam.jmp.redislab.api.RequestDescriptor;
 import com.epam.jmp.redislab.configuration.ratelimit.RateLimitRule;
 import org.springframework.stereotype.Component;
 import redis.clients.jedis.JedisCluster;
-import redis.clients.jedis.Transaction;
-import redis.clients.jedis.args.ExpiryOption;
 
 import java.util.Optional;
 import java.util.Set;
@@ -32,11 +30,9 @@ public class JedisRateLimitService implements RateLimitService {
                 String counter = jedisCluster.get(key);
                 int currentCounter = counter != null ? Integer.parseInt(counter) : 0;
 
-                if (currentCounter < rateLimitRule.getAllowedNumberOfRequests()) {
-                    Transaction transaction = (Transaction) jedisCluster.multi();
-                    transaction.incr(key);
-                    transaction.expire(key, rateLimitRule.getTimeInterval().getSeconds(), ExpiryOption.NX);
-                    transaction.exec();
+                if (currentCounter <= rateLimitRule.getAllowedNumberOfRequests()) {
+                    jedisCluster.incr(key);
+                    jedisCluster.expire(key, rateLimitRule.getTimeInterval().getSeconds());
                     return true;
                 }
             }
